@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Super Brillo Díaz — Productos de aseo para hogar, comercio e industria</title>
+<meta name="description" content="Detergentes, desinfectantes, desengrasantes e implementos de aseo. Presentaciones de 500 ml a 20 litros con precios por volumen.">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body>
+
+<main>
+
+	<!-- ---------------- Portada ---------------- -->
+	<section class="hero">
+		<div class="contenedor">
+			<div>
+				<h1>Limpieza que <em>rinde más</em>, para tu casa y tu negocio</h1>
+				<p class="bajada">
+					Fabricamos detergentes, desinfectantes y desengrasantes concentrados.
+					Desde el litro para el hogar hasta el garrafón de 20 litros para industria,
+					restaurantes y conjuntos residenciales.
+				</p>
+				<div class="hero-acciones">
+					<a class="btn btn-lima" href="tienda.html">Ver catálogo completo</a>
+					<a class="btn btn-secundario" href="tienda.html?linea=industrial">Precios por volumen</a>
+				</div>
+				<div class="hero-sellos">
+					<div><span>🌱</span> Libre de fosfato</div>
+					<div><span>🧪</span> Fórmulas concentradas</div>
+					<div><span>🚚</span> Despacho en 24–48 h</div>
+				</div>
+			</div>
+			<figure class="hero-figura">
+				<span class="etiqueta-hero">Catálogo 2026</span>
+				<img src="assets/img/alcaline-blue.jpg" alt="Detergente Alcaline Blue de Super Brillo Díaz">
+			</figure>
+		</div>
+	</section>
+
+	<!-- ---------------- Categorías ---------------- -->
+	<section class="seccion">
+		<div class="contenedor">
+			<div class="encabezado-seccion">
+				<span class="antetitulo">Explora por línea</span>
+				<h2>Todo el aseo en un solo proveedor</h2>
+				<p>Siete líneas de producto que cubren lavandería, cocina, baños, pisos y desinfección profesional.</p>
+			</div>
+			<div class="rejilla-categorias" id="rejilla-categorias"></div>
+		</div>
+	</section>
+
+	<!-- ---------------- Destacados ---------------- -->
+	<section class="seccion seccion-alt">
+		<div class="contenedor">
+			<div class="encabezado-seccion">
+				<span class="antetitulo">Los más pedidos</span>
+				<h2>Productos destacados</h2>
+				<p>Los que más rotación tienen entre clientes de hogar y de negocio.</p>
+			</div>
+			<div class="rejilla-productos" id="rejilla-destacados"></div>
+			<p style="margin-top:30px">
+				<a class="btn btn-secundario" href="tienda.html">Ver los <span id="total-productos">…</span> productos del catálogo</a>
+			</p>
+		</div>
+	</section>
+
+	<!-- ---------------- Confianza ---------------- -->
+	<section class="seccion">
+		<div class="contenedor">
+			<div class="franja-confianza">
+				<div class="item-confianza">
+					<span class="icono">🏭</span>
+					<div>
+						<strong>Fabricación propia</strong>
+						<p>Controlamos la fórmula y el envasado, así que el precio por litro baja al subir la presentación.</p>
+					</div>
+				</div>
+				<div class="item-confianza">
+					<span class="icono">📦</span>
+					<div>
+						<strong>De 500 ml a 20 litros</strong>
+						<p>La misma fórmula en la presentación que necesites, con código de referencia para recompra.</p>
+					</div>
+				</div>
+				<div class="item-confianza">
+					<span class="icono">💬</span>
+					<div>
+						<strong>Cotización por WhatsApp</strong>
+						<p>Para pedidos institucionales o productos a granel, te respondemos con precio en el día.</p>
+					</div>
+				</div>
+				<div class="item-confianza">
+					<span class="icono">🔁</span>
+					<div>
+						<strong>Pedidos recurrentes</strong>
+						<p>Programamos entregas mensuales para restaurantes, hoteles y conjuntos residenciales.</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- ---------------- Banda mayorista ---------------- -->
+	<section class="seccion" style="padding-top:0">
+		<div class="contenedor">
+			<div class="banda-mayorista">
+				<div>
+					<span class="antetitulo" style="color:var(--lima-500)">Línea industrial</span>
+					<h2>¿Compras por volumen?</h2>
+					<p>
+						Las presentaciones de 10 y 20 litros tienen precio preferencial y podemos armar
+						un kit a la medida de tu operación. Cuéntanos qué necesitas y te enviamos la cotización.
+					</p>
+				</div>
+				<div class="banda-acciones">
+					<a class="btn btn-lima" id="wa-mayorista" href="#" target="_blank" rel="noopener">Pedir cotización</a>
+					<a class="btn btn-secundario" href="tienda.html?linea=industrial">Ver línea industrial</a>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- ---------------- Consejos ---------------- -->
+	<section class="seccion seccion-alt">
+		<div class="contenedor">
+			<div class="encabezado-seccion">
+				<span class="antetitulo">Consejos de limpieza</span>
+				<h2>Aprende a sacarle el máximo a cada producto</h2>
+				<p>Dosificación, orden de aplicación y errores comunes, explicados por quienes fabrican el producto.</p>
+			</div>
+			<div class="rejilla-consejos" id="rejilla-consejos"></div>
+			<p style="margin-top:30px">
+				<a class="btn btn-secundario" href="consejos.html">Ver todos los consejos</a>
+			</p>
+		</div>
+	</section>
+
+</main>
+
+<script src="assets/js/datos.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+	iniciarPagina("index.html")
+
+	/* Categorías con su número de productos */
+	document.getElementById("rejilla-categorias").innerHTML = CATEGORIAS.map((c) => {
+		const n = PRODUCTOS.filter((p) => p.categoria === c.slug).length
+		return `
+		<a class="tarjeta-categoria" href="tienda.html?cat=${c.slug}">
+			<span class="icono">${c.icono}</span>
+			<strong>${c.nombre}</strong>
+			<small>${n} producto${n === 1 ? "" : "s"}</small>
+		</a>`
+	}).join("")
+
+	/* Destacados */
+	document.getElementById("rejilla-destacados").innerHTML = PRODUCTOS.filter((p) => p.destacado)
+		.map(tarjetaProducto)
+		.join("")
+
+	document.getElementById("total-productos").textContent = PRODUCTOS.length
+
+	/* Consejos: los tres primeros */
+	document.getElementById("rejilla-consejos").innerHTML = CONSEJOS.slice(0, 3)
+		.map((c) => {
+			const prod = productoPorSlug(c.producto)
+			return `
+		<article class="tarjeta-consejo">
+			<a class="marco-imagen" href="consejos.html#${c.slug}">
+				<img src="${prod ? imagenDe(prod) : ""}" alt="" loading="lazy">
+			</a>
+			<div class="cuerpo-tarjeta">
+				<div class="meta-consejo">
+					<span class="cat">${c.categoria}</span><span>·</span><span>${c.minutos} min de lectura</span>
+				</div>
+				<h3>${c.titulo}</h3>
+				<p>${c.extracto}</p>
+				<span class="enlace-flecha">Leer el consejo →</span>
+			</div>
+		</article>`
+		})
+		.join("")
+
+	document.getElementById("wa-mayorista").href = enlaceWhatsApp(
+		`Hola ${MARCA.corto}, compro por volumen y quisiera una cotización de la línea industrial (presentaciones de 10 y 20 litros).`,
+	)
+</script>
+</body>
+</html>

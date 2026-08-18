@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Finalizar compra — Super Brillo Díaz</title>
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body>
+
+<main>
+	<div class="contenedor">
+		<nav class="migas" aria-label="Ruta">
+			<a href="index.html">Inicio</a> / <a href="carrito.html">Carrito</a> / <span>Finalizar compra</span>
+		</nav>
+	</div>
+
+	<div class="contenedor encabezado-tienda">
+		<h1>Finalizar compra</h1>
+		<ol class="pasos">
+			<li><span class="num">✓</span> Carrito</li>
+			<li class="activo"><span class="num">2</span> Datos y envío</li>
+			<li><span class="num">3</span> Confirmación</li>
+		</ol>
+	</div>
+
+	<div class="contenedor" id="zona-checkout"><!-- se pinta por JS --></div>
+</main>
+
+<script src="assets/js/datos.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+	iniciarPagina("carrito.html")
+
+	const ENVIO_GRATIS_DESDE = 150000
+	const COSTO_ENVIO = 12000
+
+	function pintar() {
+		const lineas = Carrito.lineas()
+		const $zona = document.getElementById("zona-checkout")
+
+		if (!lineas.length) {
+			$zona.innerHTML = `
+			<div class="vacio">
+				<div class="icono">🧾</div>
+				<h2>No hay nada que pagar todavía</h2>
+				<p style="color:var(--tinta-media);margin-bottom:22px">Agrega productos al carrito para continuar.</p>
+				<a class="btn btn-primario" href="tienda.html">Ir a la tienda</a>
+			</div>`
+			return
+		}
+
+		const subtotal = Carrito.subtotal()
+		const envio = subtotal >= ENVIO_GRATIS_DESDE ? 0 : COSTO_ENVIO
+		const total = subtotal + envio
+
+		const resumenLineas = lineas
+			.map(
+				(l) => `
+			<div class="fila-resumen">
+				<span>${l.cantidad} × ${l.nombre}<br><small style="color:var(--tinta-suave)">${l.presentacion}${l.aroma ? ` · ${l.aroma}` : ""}</small></span>
+				<span style="white-space:nowrap">${precioCOP(l.precio * l.cantidad)}</span>
+			</div>`,
+			)
+			.join("")
+
+		$zona.innerHTML = `
+		<div class="diseno-carrito">
+			<section>
+				<form id="form-checkout" novalidate>
+					<div class="bloque-form">
+						<h3>Datos de contacto</h3>
+						<div class="rejilla-campos">
+							<div class="campo">
+								<label for="nombre">Nombre y apellido *</label>
+								<input id="nombre" name="nombre" required autocomplete="name">
+							</div>
+							<div class="campo">
+								<label for="documento">Cédula o NIT *</label>
+								<input id="documento" name="documento" required inputmode="numeric">
+							</div>
+							<div class="campo">
+								<label for="correo">Correo electrónico *</label>
+								<input id="correo" name="correo" type="email" required autocomplete="email">
+							</div>
+							<div class="campo">
+								<label for="celular">Celular / WhatsApp *</label>
+								<input id="celular" name="celular" type="tel" required autocomplete="tel" placeholder="300 000 0000">
+							</div>
+							<div class="campo ancho">
+								<label for="empresa">Empresa (opcional)</label>
+								<input id="empresa" name="empresa" autocomplete="organization">
+								<span class="ayuda">Si necesitas factura electrónica a nombre de una empresa.</span>
+							</div>
+						</div>
+					</div>
+
+					<div class="bloque-form">
+						<h3>Entrega</h3>
+						<label class="opcion-pago activa" data-entrega="domicilio">
+							<input type="radio" name="entrega" value="domicilio" checked>
+							<span>
+								<strong>Envío a domicilio</strong>
+								<small>24 a 48 horas hábiles. ${envio === 0 ? "Gratis por monto del pedido." : `Costo ${precioCOP(COSTO_ENVIO)}.`}</small>
+							</span>
+						</label>
+						<label class="opcion-pago" data-entrega="recoger">
+							<input type="radio" name="entrega" value="recoger">
+							<span>
+								<strong>Recoger en planta</strong>
+								<small>Sin costo de envío. Te avisamos cuando el pedido esté listo.</small>
+							</span>
+						</label>
+
+						<div class="rejilla-campos" style="margin-top:18px" id="campos-envio">
+							<div class="campo ancho">
+								<label for="direccion">Dirección *</label>
+								<input id="direccion" name="direccion" required autocomplete="street-address" placeholder="Calle 00 # 00 - 00">
+							</div>
+							<div class="campo">
+								<label for="ciudad">Ciudad *</label>
+								<input id="ciudad" name="ciudad" required value="Bogotá">
+							</div>
+							<div class="campo">
+								<label for="departamento">Departamento *</label>
+								<select id="departamento" name="departamento" required>
+									<option>Cundinamarca</option>
+									<option>Antioquia</option>
+									<option>Valle del Cauca</option>
+									<option>Atlántico</option>
+									<option>Santander</option>
+									<option>Otro</option>
+								</select>
+							</div>
+							<div class="campo ancho">
+								<label for="notas">Notas para la entrega (opcional)</label>
+								<textarea id="notas" name="notas" rows="3" placeholder="Portería, horarios de recibo, punto de referencia…"></textarea>
+							</div>
+						</div>
+					</div>
+
+					<div class="bloque-form">
+						<h3>Medio de pago</h3>
+						<label class="opcion-pago activa" data-pago>
+							<input type="radio" name="pago" value="tarjeta" checked>
+							<span>
+								<strong>Tarjeta débito o crédito</strong>
+								<small>Pago seguro con pasarela. Visa, Mastercard, Amex.</small>
+							</span>
+						</label>
+						<label class="opcion-pago" data-pago>
+							<input type="radio" name="pago" value="pse">
+							<span>
+								<strong>PSE — débito desde tu banco</strong>
+								<small>Te redirige al portal de tu entidad bancaria.</small>
+							</span>
+						</label>
+						<label class="opcion-pago" data-pago>
+							<input type="radio" name="pago" value="transferencia">
+							<span>
+								<strong>Transferencia bancaria</strong>
+								<small>Te enviamos los datos de la cuenta y confirmas el comprobante.</small>
+							</span>
+						</label>
+						<label class="opcion-pago" data-pago>
+							<input type="radio" name="pago" value="contraentrega">
+							<span>
+								<strong>Pago contra entrega</strong>
+								<small>Disponible solo dentro de la ciudad.</small>
+							</span>
+						</label>
+						<p style="font-size:.82rem;color:var(--tinta-suave);margin:14px 0 0">
+							En el bosquejo ningún medio de pago está conectado. En la tienda real se integra la pasarela que elija el cliente.
+						</p>
+					</div>
+				</form>
+			</section>
+
+			<aside class="resumen">
+				<h3>Tu pedido</h3>
+				${resumenLineas}
+				<div class="fila-resumen" style="border-top:1px solid var(--linea);margin-top:8px;padding-top:12px">
+					<span>Subtotal</span><span>${precioCOP(subtotal)}</span>
+				</div>
+				<div class="fila-resumen">
+					<span>Envío</span>
+					<span>${envio === 0 ? "<strong style='color:var(--exito)'>Gratis</strong>" : precioCOP(envio)}</span>
+				</div>
+				<div class="fila-resumen total"><span>Total</span><span>${precioCOP(total)}</span></div>
+
+				<button class="btn btn-primario btn-bloque" id="btn-pagar" style="margin-top:18px">
+					Confirmar pedido · ${precioCOP(total)}
+				</button>
+				<a class="btn btn-secundario btn-bloque" href="carrito.html" style="margin-top:10px">Volver al carrito</a>
+
+				<p style="font-size:.8rem;color:var(--tinta-suave);margin:16px 0 0">
+					Al confirmar aceptas los términos y la política de tratamiento de datos.
+				</p>
+			</aside>
+		</div>`
+
+		conectar(total)
+	}
+
+	function conectar(total) {
+		/* Resalta la opción de entrega y muestra/oculta la dirección */
+		document.querySelectorAll("[data-entrega]").forEach((el) =>
+			el.addEventListener("click", () => {
+				document.querySelectorAll("[data-entrega]").forEach((x) => x.classList.remove("activa"))
+				el.classList.add("activa")
+				const esDomicilio = el.dataset.entrega === "domicilio"
+				document.getElementById("campos-envio").classList.toggle("oculto", !esDomicilio)
+				document.querySelectorAll("#campos-envio [required]").forEach((c) => (c.required = esDomicilio))
+			}),
+		)
+
+		document.querySelectorAll("[data-pago]").forEach((el) =>
+			el.addEventListener("click", () => {
+				document.querySelectorAll("[data-pago]").forEach((x) => x.classList.remove("activa"))
+				el.classList.add("activa")
+			}),
+		)
+
+		/* Confirmación simulada */
+		document.getElementById("btn-pagar").addEventListener("click", () => {
+			const form = document.getElementById("form-checkout")
+			if (!form.checkValidity()) {
+				form.querySelectorAll(":invalid")[0]?.focus()
+				brindis("Completa los campos obligatorios")
+				return
+			}
+			const nombre = document.getElementById("nombre").value.split(" ")[0] || "Gracias"
+			const numero = "SBD-" + String(Math.floor(1000 + Math.random() * 9000))
+			document.querySelector("main").innerHTML = `
+			<div class="contenedor" style="padding:70px 20px;max-width:640px;text-align:center">
+				<div style="font-size:3.6rem;margin-bottom:12px">✅</div>
+				<h1>¡Listo, ${nombre}!</h1>
+				<p style="color:var(--tinta-media);font-size:1.05rem">
+					Recibimos tu pedido <strong>${numero}</strong> por <strong>${precioCOP(total)}</strong>.
+					Te enviamos la confirmación al correo y te escribimos por WhatsApp para coordinar la entrega.
+				</p>
+				<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:26px">
+					<a class="btn btn-primario" href="tienda.html">Seguir comprando</a>
+					<a class="btn btn-whatsapp" href="${enlaceWhatsApp(`Hola, acabo de hacer el pedido ${numero}.`)}" target="_blank" rel="noopener">💬 Escribir por WhatsApp</a>
+				</div>
+				<p style="font-size:.84rem;color:var(--tinta-suave);margin-top:30px">
+					Pantalla de ejemplo del bosquejo. No se procesó ningún pago real.
+				</p>
+			</div>`
+			Carrito.vaciar()
+			window.scrollTo({ top: 0, behavior: "smooth" })
+		})
+	}
+
+	pintar()
+</script>
+</body>
+</html>

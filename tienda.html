@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tienda — Super Brillo Díaz</title>
+<meta name="description" content="Catálogo completo de productos de aseo: detergentes, desinfectantes, desengrasantes, químicos industriales e implementos.">
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body>
+
+<main>
+	<div class="contenedor">
+		<nav class="migas" aria-label="Ruta">
+			<a href="index.html">Inicio</a> / <span id="miga-actual">Tienda</span>
+		</nav>
+	</div>
+
+	<div class="contenedor encabezado-tienda">
+		<h1 id="titulo-tienda">Catálogo completo</h1>
+		<p id="bajada-tienda">
+			Todas nuestras líneas en un solo lugar. Cada producto viene en varias presentaciones:
+			elige la que necesites y el precio se ajusta automáticamente.
+		</p>
+	</div>
+
+	<div class="contenedor diseno-tienda">
+
+		<!-- ---------------- Filtros ---------------- -->
+		<aside class="filtros" aria-label="Filtros">
+			<div class="grupo-filtro">
+				<h4>Buscar</h4>
+				<input type="search" id="busqueda" placeholder="Ej. desengrasante" style="width:100%" aria-label="Buscar producto">
+			</div>
+
+			<div class="grupo-filtro">
+				<h4>Categoría</h4>
+				<div id="filtros-categoria"></div>
+			</div>
+
+			<div class="grupo-filtro">
+				<h4>Línea</h4>
+				<label class="opcion-filtro">
+					<input type="checkbox" value="hogar" data-filtro-linea> Hogar (1 a 4 L)
+				</label>
+				<label class="opcion-filtro">
+					<input type="checkbox" value="industrial" data-filtro-linea> Industrial (10 y 20 L)
+				</label>
+			</div>
+
+			<div class="grupo-filtro">
+				<h4>Disponibilidad de precio</h4>
+				<label class="opcion-filtro">
+					<input type="checkbox" id="solo-con-precio"> Solo con precio publicado
+				</label>
+			</div>
+
+			<div class="grupo-filtro">
+				<button class="btn btn-secundario btn-bloque" id="limpiar-filtros">Limpiar filtros</button>
+			</div>
+		</aside>
+
+		<!-- ---------------- Resultados ---------------- -->
+		<section>
+			<div class="barra-resultados">
+				<p id="conteo">…</p>
+				<label>
+					<span class="solo-lectores">Ordenar por</span>
+					<select id="orden">
+						<option value="relevancia">Ordenar: relevancia</option>
+						<option value="precio-asc">Precio: de menor a mayor</option>
+						<option value="precio-desc">Precio: de mayor a menor</option>
+						<option value="nombre">Nombre: A – Z</option>
+					</select>
+				</label>
+			</div>
+
+			<div class="rejilla-productos" id="rejilla"></div>
+
+			<div class="sin-resultados oculto" id="sin-resultados">
+				<p><strong>No encontramos productos con esos filtros.</strong></p>
+				<p>Prueba quitando algún filtro o escríbenos y te ayudamos a encontrarlo.</p>
+				<a class="btn btn-whatsapp" id="wa-ayuda" href="#" target="_blank" rel="noopener">Preguntar por WhatsApp</a>
+			</div>
+		</section>
+	</div>
+</main>
+
+<script src="assets/js/datos.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+	iniciarPagina("tienda.html")
+
+	const params = new URLSearchParams(location.search)
+	const catInicial = params.get("cat")
+	const lineaInicial = params.get("linea")
+
+	/* --- Filtros de categoría --- */
+	document.getElementById("filtros-categoria").innerHTML = CATEGORIAS.map((c) => {
+		const n = PRODUCTOS.filter((p) => p.categoria === c.slug).length
+		return `
+		<label class="opcion-filtro">
+			<input type="checkbox" value="${c.slug}" data-filtro-cat ${c.slug === catInicial ? "checked" : ""}>
+			${c.nombre}
+			<span class="cuenta">${n}</span>
+		</label>`
+	}).join("")
+
+	if (lineaInicial) {
+		const casilla = document.querySelector(`[data-filtro-linea][value="${lineaInicial}"]`)
+		if (casilla) casilla.checked = true
+	}
+
+	/* Ajusta encabezado si se entró filtrado */
+	if (catInicial) {
+		const cat = categoriaPorSlug(catInicial)
+		if (cat) {
+			document.getElementById("titulo-tienda").textContent = cat.nombre
+			document.getElementById("miga-actual").textContent = cat.nombre
+		}
+	} else if (lineaInicial === "industrial") {
+		document.getElementById("titulo-tienda").textContent = "Línea industrial"
+		document.getElementById("miga-actual").textContent = "Línea industrial"
+		document.getElementById("bajada-tienda").textContent =
+			"Presentaciones de 10 y 20 litros con precio preferencial, pensadas para restaurantes, hoteles, conjuntos residenciales e industria."
+	}
+
+	/* --- Motor de filtrado --- */
+	const $rejilla = document.getElementById("rejilla")
+	const $conteo = document.getElementById("conteo")
+	const $vacio = document.getElementById("sin-resultados")
+
+	function marcados(selector) {
+		return [...document.querySelectorAll(selector)].filter((c) => c.checked).map((c) => c.value)
+	}
+
+	function aplicar() {
+		const cats = marcados("[data-filtro-cat]")
+		const lineas = marcados("[data-filtro-linea]")
+		const soloConPrecio = document.getElementById("solo-con-precio").checked
+		const texto = document.getElementById("busqueda").value.trim().toLowerCase()
+
+		let lista = PRODUCTOS.filter((p) => {
+			if (cats.length && !cats.includes(p.categoria)) return false
+			if (lineas.length && !p.presentaciones.some((x) => lineas.includes(x.linea))) return false
+			if (soloConPrecio && precioDesde(p) == null) return false
+			if (texto) {
+				const buscable = [p.nombre, p.subtitulo, p.resumen, ...(p.usos || [])].join(" ").toLowerCase()
+				if (!buscable.includes(texto)) return false
+			}
+			return true
+		})
+
+		const orden = document.getElementById("orden").value
+		const conValor = (p) => precioDesde(p) ?? Number.POSITIVE_INFINITY
+		if (orden === "precio-asc") lista.sort((a, b) => conValor(a) - conValor(b))
+		else if (orden === "precio-desc") lista.sort((a, b) => conValor(b) - conValor(a))
+		else if (orden === "nombre") lista.sort((a, b) => a.nombre.localeCompare(b.nombre, "es"))
+		else lista.sort((a, b) => Number(!!b.destacado) - Number(!!a.destacado))
+
+		$rejilla.innerHTML = lista.map(tarjetaProducto).join("")
+		$conteo.textContent =
+			lista.length === PRODUCTOS.length
+				? `Mostrando los ${lista.length} productos del catálogo`
+				: `${lista.length} de ${PRODUCTOS.length} producto${lista.length === 1 ? "" : "s"}`
+		$vacio.classList.toggle("oculto", lista.length > 0)
+	}
+
+	document.querySelectorAll("[data-filtro-cat], [data-filtro-linea], #solo-con-precio, #orden").forEach((el) =>
+		el.addEventListener("change", aplicar),
+	)
+	document.getElementById("busqueda").addEventListener("input", aplicar)
+
+	document.getElementById("limpiar-filtros").addEventListener("click", () => {
+		document.querySelectorAll("[data-filtro-cat], [data-filtro-linea]").forEach((c) => (c.checked = false))
+		document.getElementById("solo-con-precio").checked = false
+		document.getElementById("busqueda").value = ""
+		document.getElementById("orden").value = "relevancia"
+		aplicar()
+	})
+
+	document.getElementById("wa-ayuda").href = enlaceWhatsApp(
+		`Hola ${MARCA.corto}, estoy buscando un producto y no lo encuentro en la tienda. ¿Me ayudan?`,
+	)
+
+	aplicar()
+</script>
+</body>
+</html>

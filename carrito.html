@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carrito — Super Brillo Díaz</title>
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body>
+
+<main>
+	<div class="contenedor">
+		<nav class="migas" aria-label="Ruta">
+			<a href="index.html">Inicio</a> / <span>Carrito</span>
+		</nav>
+	</div>
+
+	<div class="contenedor encabezado-tienda">
+		<h1>Tu carrito</h1>
+		<p>Revisa las presentaciones y cantidades antes de continuar.</p>
+	</div>
+
+	<div class="contenedor" id="zona-carrito"><!-- se pinta por JS --></div>
+</main>
+
+<script src="assets/js/datos.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+	iniciarPagina("carrito.html")
+
+	const ENVIO_GRATIS_DESDE = 150000
+	const COSTO_ENVIO = 12000
+
+	function pintar() {
+		const lineas = Carrito.lineas()
+		const $zona = document.getElementById("zona-carrito")
+
+		if (!lineas.length) {
+			$zona.innerHTML = `
+			<div class="vacio">
+				<div class="icono">🛒</div>
+				<h2>Tu carrito está vacío</h2>
+				<p style="color:var(--tinta-media);max-width:44ch;margin:0 auto 22px">
+					Agrega productos desde la tienda o escríbenos por WhatsApp si prefieres que armemos el pedido contigo.
+				</p>
+				<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+					<a class="btn btn-primario" href="tienda.html">Ir a la tienda</a>
+					<a class="btn btn-whatsapp" href="${enlaceWhatsApp("Hola, quisiera ayuda para armar un pedido.")}" target="_blank" rel="noopener">💬 Pedir por WhatsApp</a>
+				</div>
+			</div>`
+			return
+		}
+
+		const subtotal = Carrito.subtotal()
+		const envio = subtotal >= ENVIO_GRATIS_DESDE ? 0 : COSTO_ENVIO
+		const total = subtotal + envio
+		const faltaParaGratis = ENVIO_GRATIS_DESDE - subtotal
+
+		const filas = lineas
+			.map((l) => {
+				const p = productoPorSlug(l.slug)
+				return `
+			<div class="linea-carrito">
+				<a class="miniatura" href="producto.html?p=${l.slug}">
+					<img src="${p ? imagenDe(p) : ""}" alt="${l.nombre}">
+				</a>
+				<div>
+					<h4><a href="producto.html?p=${l.slug}" style="color:inherit">${l.nombre}</a></h4>
+					<p class="variante">
+						${l.presentacion}${l.aroma ? ` · Aroma ${l.aroma}` : ""} · código ${l.codigo} · ${precioCOP(l.precio)} c/u
+					</p>
+					<div class="controles">
+						<div class="cantidad">
+							<button type="button" data-menos="${l.id}" aria-label="Quitar una unidad">−</button>
+							<input type="number" value="${l.cantidad}" min="1" max="999" data-cant="${l.id}" aria-label="Cantidad de ${l.nombre}">
+							<button type="button" data-mas="${l.id}" aria-label="Agregar una unidad">+</button>
+						</div>
+						<button class="quitar" data-quitar="${l.id}">Quitar</button>
+					</div>
+				</div>
+				<div class="subtotal-linea">${precioCOP(l.precio * l.cantidad)}</div>
+			</div>`
+			})
+			.join("")
+
+		$zona.innerHTML = `
+		<div class="diseno-carrito">
+			<section>
+				${filas}
+				<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px">
+					<a class="btn btn-secundario" href="tienda.html">← Seguir comprando</a>
+					<button class="btn btn-secundario" id="vaciar">Vaciar carrito</button>
+				</div>
+			</section>
+
+			<aside class="resumen">
+				<h3>Resumen del pedido</h3>
+				<div class="fila-resumen"><span>Productos (${Carrito.unidades()})</span><span>${precioCOP(subtotal)}</span></div>
+				<div class="fila-resumen">
+					<span>Envío</span>
+					<span>${envio === 0 ? "<strong style='color:var(--exito)'>Gratis</strong>" : precioCOP(envio)}</span>
+				</div>
+				${
+					envio > 0
+						? `<p style="font-size:.82rem;color:var(--tinta-suave);margin:6px 0 0">
+								Te faltan ${precioCOP(faltaParaGratis)} para el envío gratis.
+							</p>`
+						: ""
+				}
+				<div class="fila-resumen total"><span>Total</span><span>${precioCOP(total)}</span></div>
+
+				<div style="display:grid;gap:10px;margin-top:20px">
+					<a class="btn btn-primario btn-bloque" href="checkout.html">Continuar al pago</a>
+					<a class="btn btn-whatsapp btn-bloque" id="wa-pedido" href="#" target="_blank" rel="noopener">💬 Confirmar por WhatsApp</a>
+				</div>
+
+				<p style="font-size:.8rem;color:var(--tinta-suave);margin:16px 0 0">
+					Precios en COP. El valor del envío es de ejemplo para el bosquejo.
+				</p>
+			</aside>
+		</div>`
+
+		document.getElementById("wa-pedido").href = enlaceWhatsApp(textoPedidoCarrito())
+		conectar()
+	}
+
+	function conectar() {
+		document.querySelectorAll("[data-menos]").forEach((b) =>
+			b.addEventListener("click", () => {
+				const l = Carrito.lineas().find((x) => x.id === b.dataset.menos)
+				Carrito.cambiarCantidad(b.dataset.menos, l.cantidad - 1)
+				pintar()
+			}),
+		)
+		document.querySelectorAll("[data-mas]").forEach((b) =>
+			b.addEventListener("click", () => {
+				const l = Carrito.lineas().find((x) => x.id === b.dataset.mas)
+				Carrito.cambiarCantidad(b.dataset.mas, l.cantidad + 1)
+				pintar()
+			}),
+		)
+		document.querySelectorAll("[data-cant]").forEach((i) =>
+			i.addEventListener("change", () => {
+				Carrito.cambiarCantidad(i.dataset.cant, parseInt(i.value, 10) || 1)
+				pintar()
+			}),
+		)
+		document.querySelectorAll("[data-quitar]").forEach((b) =>
+			b.addEventListener("click", () => {
+				Carrito.quitar(b.dataset.quitar)
+				brindis("Producto quitado del carrito")
+				pintar()
+			}),
+		)
+		document.getElementById("vaciar")?.addEventListener("click", () => {
+			Carrito.vaciar()
+			pintar()
+		})
+	}
+
+	pintar()
+</script>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Producto — Super Brillo Díaz</title>
+<link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body>
+
+<main>
+	<div class="contenedor">
+		<nav class="migas" aria-label="Ruta">
+			<a href="index.html">Inicio</a> /
+			<a href="tienda.html">Tienda</a> /
+			<a id="miga-cat" href="#">Categoría</a> /
+			<span id="miga-nombre">Producto</span>
+		</nav>
+	</div>
+
+	<div class="contenedor ficha" id="ficha"><!-- se pinta por JS --></div>
+
+	<div class="contenedor pestanas" id="zona-pestanas"><!-- se pinta por JS --></div>
+
+	<section class="seccion seccion-alt">
+		<div class="contenedor">
+			<div class="encabezado-seccion">
+				<span class="antetitulo">También te puede servir</span>
+				<h2>Productos relacionados</h2>
+			</div>
+			<div class="rejilla-productos" id="relacionados"></div>
+		</div>
+	</section>
+</main>
+
+<script src="assets/js/datos.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+	iniciarPagina("tienda.html")
+
+	const slug = new URLSearchParams(location.search).get("p")
+	const producto = productoPorSlug(slug) || PRODUCTOS[0]
+	const cat = categoriaPorSlug(producto.categoria)
+
+	document.title = `${producto.nombre} — ${MARCA.nombre}`
+	document.getElementById("miga-nombre").textContent = producto.nombre
+	const $migaCat = document.getElementById("miga-cat")
+	$migaCat.textContent = cat.nombre
+	$migaCat.href = `tienda.html?cat=${cat.slug}`
+
+	/* Estado de la selección */
+	let presSel = producto.presentaciones[0]
+	let aromaSel = producto.aromas.length ? producto.aromas[0] : ""
+	let cantidad = 1
+
+	/* ---------------- Ficha ---------------- */
+	function pintarFicha() {
+		const hayAromas = producto.aromas.length > 0
+
+		const pastillasPres = producto.presentaciones
+			.map(
+				(p) => `
+			<label class="pastilla ${p.etiqueta === presSel.etiqueta ? "activa" : ""}" data-pres="${p.etiqueta}">
+				<input type="radio" name="presentacion" value="${p.etiqueta}" ${p.etiqueta === presSel.etiqueta ? "checked" : ""}>
+				<span>${p.etiqueta}</span>
+				<span class="valor-pastilla">${p.precio == null ? "cotizar" : precioCOP(p.precio)}</span>
+			</label>`,
+			)
+			.join("")
+
+		const pastillasAroma = hayAromas
+			? `
+			<div class="grupo-opcion">
+				<label>Aroma</label>
+				<div class="pastillas">
+					${producto.aromas
+						.map(
+							(a) => `
+					<label class="pastilla ${a === aromaSel ? "activa" : ""}" data-aroma="${a}">
+						<input type="radio" name="aroma" value="${a}" ${a === aromaSel ? "checked" : ""}>
+						<span>${a}</span>
+					</label>`,
+						)
+						.join("")}
+				</div>
+				${producto.aromasPorConfirmar ? `<p class="nota-confirmar">⚠ Aromas pendientes de confirmar con el cliente: el catálogo muestra cuatro variantes pero no las nombra.</p>` : ""}
+			</div>`
+			: ""
+
+		const cotizable = presSel.precio == null
+
+		const bloquePrecio = cotizable
+			? `<div class="precio-ficha">
+					<strong style="font-size:1.4rem;color:var(--cian-600)">Precio a cotizar</strong>
+					<span>esta presentación no tiene valor publicado</span>
+				</div>`
+			: `<div class="precio-ficha">
+					<strong>${precioCOP(presSel.precio)}</strong>
+					<span>por unidad de ${presSel.etiqueta} · código ${presSel.codigo}</span>
+				</div>`
+
+		const acciones = cotizable
+			? `<a class="btn btn-whatsapp" id="btn-cotizar" href="#" target="_blank" rel="noopener">💬 Pedir cotización</a>`
+			: `
+			<div class="cantidad">
+				<button type="button" id="menos" aria-label="Quitar una unidad">−</button>
+				<input type="number" id="cant" value="${cantidad}" min="1" max="999" aria-label="Cantidad">
+				<button type="button" id="mas" aria-label="Agregar una unidad">+</button>
+			</div>
+			<button class="btn btn-primario" id="btn-agregar">🛒 Agregar al carrito</button>
+			<a class="btn btn-whatsapp" id="btn-cotizar" href="#" target="_blank" rel="noopener">💬 Cotizar</a>`
+
+		document.getElementById("ficha").innerHTML = `
+		<div class="galeria">
+			<div class="galeria-principal">
+				<img src="${imagenDe(producto)}" alt="${producto.nombre}">
+			</div>
+			<p class="galeria-pie">Imagen tomada del catálogo impreso 2026 · página ${producto.pagina}</p>
+		</div>
+
+		<div class="info-producto">
+			<span class="cat-tarjeta">${cat.nombre}</span>
+			<h1>${producto.nombre}</h1>
+			${producto.subtitulo ? `<p class="subtitulo-producto">${producto.subtitulo}</p>` : ""}
+
+			${bloquePrecio}
+
+			<p class="descripcion-producto">${producto.resumen}</p>
+
+			${
+				producto.usos && producto.usos.length
+					? `<div class="chips-uso">${producto.usos.map((u) => `<span class="chip-uso">Úsalo en ${u.toLowerCase()}</span>`).join("")}</div>`
+					: ""
+			}
+
+			${
+				producto.advertencia
+					? `<div class="aviso-producto"><span>⚠</span><span>${producto.advertencia}</span></div>`
+					: ""
+			}
+
+			<div class="opciones">
+				<div class="grupo-opcion">
+					<label>Presentación</label>
+					<div class="pastillas">${pastillasPres}</div>
+				</div>
+				${pastillasAroma}
+			</div>
+
+			<div class="fila-comprar">${acciones}</div>
+
+			<p style="font-size:.84rem;color:var(--tinta-suave);margin:0">
+				¿Necesitas más de 20 unidades? Pide cotización y te damos precio por volumen.
+			</p>
+
+			<div class="meta-producto">
+				<div><strong>Código:</strong> ${presSel.codigo}</div>
+				<div><strong>Categoría:</strong> <a href="tienda.html?cat=${cat.slug}">${cat.nombre}</a></div>
+				<div><strong>Presentaciones:</strong> ${producto.presentaciones.map((p) => p.etiqueta).join(" · ")}</div>
+				${producto.aromas.length ? `<div><strong>Aromas:</strong> ${producto.aromas.join(" · ")}</div>` : ""}
+			</div>
+		</div>`
+
+		conectarFicha()
+	}
+
+	function conectarFicha() {
+		/* Presentación */
+		document.querySelectorAll("[data-pres]").forEach((el) =>
+			el.addEventListener("click", () => {
+				presSel = producto.presentaciones.find((p) => p.etiqueta === el.dataset.pres)
+				pintarFicha()
+			}),
+		)
+
+		/* Aroma */
+		document.querySelectorAll("[data-aroma]").forEach((el) =>
+			el.addEventListener("click", () => {
+				aromaSel = el.dataset.aroma
+				pintarFicha()
+			}),
+		)
+
+		/* Cantidad */
+		const $cant = document.getElementById("cant")
+		document.getElementById("menos")?.addEventListener("click", () => {
+			cantidad = Math.max(1, cantidad - 1)
+			$cant.value = cantidad
+		})
+		document.getElementById("mas")?.addEventListener("click", () => {
+			cantidad = Math.min(999, cantidad + 1)
+			$cant.value = cantidad
+		})
+		$cant?.addEventListener("change", () => {
+			cantidad = Math.max(1, Math.min(999, parseInt($cant.value, 10) || 1))
+			$cant.value = cantidad
+		})
+
+		/* Agregar al carrito */
+		document.getElementById("btn-agregar")?.addEventListener("click", () => {
+			Carrito.agregar(producto.slug, presSel.etiqueta, aromaSel, cantidad)
+			brindis(`${cantidad} × ${producto.nombre} (${presSel.etiqueta}) agregado al carrito`)
+		})
+
+		/* Cotizar por WhatsApp */
+		const $cotizar = document.getElementById("btn-cotizar")
+		if ($cotizar) $cotizar.href = enlaceWhatsApp(textoCotizacion(producto, presSel.etiqueta, aromaSel))
+	}
+
+	/* ---------------- Pestañas ---------------- */
+	function pintarPestanas() {
+		const filas = producto.presentaciones
+			.map(
+				(p) => `
+			<tr>
+				<td>${p.etiqueta}</td>
+				<td>${p.codigo}</td>
+				<td class="valor">${precioCOP(p.precio)}</td>
+				<td><span class="etiqueta-linea ${p.linea}">${p.linea === "industrial" ? "Industrial" : "Hogar"}</span></td>
+			</tr>`,
+			)
+			.join("")
+
+		document.getElementById("zona-pestanas").innerHTML = `
+		<ul class="lista-pestanas" role="tablist">
+			<li><button class="activa" data-panel="descripcion">Descripción</button></li>
+			<li><button data-panel="presentaciones">Presentaciones y precios</button></li>
+			<li><button data-panel="beneficios">Beneficios</button></li>
+			<li><button data-panel="envio">Envíos y pagos</button></li>
+		</ul>
+
+		<div class="panel-pestana" id="panel-descripcion">
+			<p>${producto.descripcion}</p>
+			${producto.advertencia ? `<p><strong>Advertencia:</strong> ${producto.advertencia}</p>` : ""}
+			<p style="font-size:.86rem;color:var(--tinta-suave)">
+				Ficha construida con el texto del catálogo impreso 2026 (página ${producto.pagina}).
+			</p>
+		</div>
+
+		<div class="panel-pestana oculto" id="panel-presentaciones">
+			<table class="tabla">
+				<thead>
+					<tr><th>Presentación</th><th>Código</th><th>Valor</th><th>Línea</th></tr>
+				</thead>
+				<tbody>${filas}</tbody>
+			</table>
+			<p style="font-size:.86rem;color:var(--tinta-suave);margin-top:14px">
+				Precios en pesos colombianos. Las presentaciones marcadas como <em>cotizar</em> no traen valor en el catálogo.
+			</p>
+		</div>
+
+		<div class="panel-pestana oculto" id="panel-beneficios">
+			<ul class="lista-beneficios">
+				${producto.vinetas.map((v) => `<li>${v}</li>`).join("")}
+			</ul>
+			${
+				producto.usos && producto.usos.length
+					? `<p><strong>Recomendado para:</strong> ${producto.usos.join(", ")}.</p>`
+					: ""
+			}
+		</div>
+
+		<div class="panel-pestana oculto" id="panel-envio">
+			<p><strong>Envíos.</strong> Despacho en 24–48 horas hábiles en ${MARCA.ciudad}. Envío nacional por transportadora
+			con flete calculado al confirmar el pedido. Recogida en planta sin costo.</p>
+			<p><strong>Pagos.</strong> Tarjeta débito y crédito, PSE, transferencia bancaria y pago contra entrega en la ciudad.</p>
+			<p><strong>Pedidos institucionales.</strong> Manejamos facturación electrónica y órdenes de compra.
+			Escríbenos por WhatsApp para condiciones de crédito.</p>
+			<p style="font-size:.86rem;color:var(--tinta-suave)">
+				Condiciones de ejemplo para el bosquejo; se ajustan a lo que defina el cliente.
+			</p>
+		</div>`
+
+		document.querySelectorAll(".lista-pestanas button").forEach((btn) =>
+			btn.addEventListener("click", () => {
+				document.querySelectorAll(".lista-pestanas button").forEach((b) => b.classList.remove("activa"))
+				document.querySelectorAll(".panel-pestana").forEach((p) => p.classList.add("oculto"))
+				btn.classList.add("activa")
+				document.getElementById(`panel-${btn.dataset.panel}`).classList.remove("oculto")
+			}),
+		)
+	}
+
+	/* ---------------- Relacionados ---------------- */
+	function pintarRelacionados() {
+		let lista = PRODUCTOS.filter((p) => p.categoria === producto.categoria && p.slug !== producto.slug)
+		if (lista.length < 4) {
+			lista = lista.concat(
+				PRODUCTOS.filter((p) => p.categoria !== producto.categoria && p.destacado && p.slug !== producto.slug),
+			)
+		}
+		document.getElementById("relacionados").innerHTML = lista.slice(0, 4).map(tarjetaProducto).join("")
+	}
+
+	pintarFicha()
+	pintarPestanas()
+	pintarRelacionados()
+</script>
+</body>
+</html>
